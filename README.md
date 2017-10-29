@@ -25,7 +25,8 @@ https://cloud.google.com/solutions/mobile/firebase-app-engine-android-studio
 
 - Enable payments: <br />
 https://stackoverflow.com/questions/6092626/how-to-integrate-payment-processing-with-gwt-gae-based-app <br />
-https://stripe.com/
+https://stripe.com/  <br />
+https://github.com/petertodd/python-bitcoinlib
 
 - Add Multilanguage: <br />
 https://pythonhosted.org/Flask-Babel/
