@@ -7,7 +7,7 @@ $(function() {
             type: 'POST',
             success: function(response) {
                 console.log(response);
-                window.location = '/display';
+                // window.location = '/display';
             },
             error: function(error) {
                 console.log(" Debug error in js");

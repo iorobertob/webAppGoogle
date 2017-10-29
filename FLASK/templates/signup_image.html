@@ -18,85 +18,89 @@
     <!-- <link href="https://getbootstrap.com/examples/jumbotron-narrow/jumbotron-narrow.css" rel="stylesheet"> -->
 
     <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.2/css/bootstrap.min.css">
-    <link href="https://getbootstrap.com/examples/jumbotron-narrow/jumbotron-narrow.css" rel="stylesheet">
+    <!-- <link href="https://getbootstrap.com/examples/jumbotron-narrow/jumbotron-narrow.css" rel="stylesheet"> -->
+
+    <link href="../static/css/jumbotron-narrow.css" rel="stylesheet">
 
     <link href="../static/css/signup.css" rel="stylesheet">
     <link href="../static/css/carousel.css" rel="stylesheet">
     <link href="../static/css/navbar.css" rel="stylesheet">
         
     <script src="../static/js/jquery-3.2.1.js"></script>
-    <script src="../static/js/signUp.js"></script>
+    
   	<script src="../static/js/jquery.ui.widget.js"></script>
 	
   	<script type="text/javascript" src="../static/js/jquery.fileupload.js"></script>
   	<script type="text/javascript" src="../static/js/jquery.fileupload-process.js"></script>
   	<script type="text/javascript" src="../static/js/jquery.fileupload-ui.js"></script>
+
+    <script src="../static/js/signUp.js"></script>
 	 
-  <script>
-		$(function(){
-			    $('#fileupload').fileupload({
-        			url: 'upload',
-        			dataType: 'json',
-        			add: function (e, data) {
-        				data.submit();
-        			},
-			        success:function(response,status) {
-					console.log(response.filename);
-					var filePath1 = 'static/Uploads/' + response.filename;
-					$('#imgUpload1').attr('src',filePath1);
-					$('#filePath1').val(filePath1);
-			        	console.log('success');
-			        },
-			        error:function(error){
-			        	console.log(error);
-			        }
-    			});
-		})
-	</script>
+    <script>
+  		$(function(){
+  			    $('#fileupload').fileupload({
+          			url: 'upload',
+          			dataType: 'json',
+          			add: function (e, data) {
+          				data.submit();
+          			},
+  			        success:function(response,status) {
+  					console.log(response.filename);
+  					var filePath1 = 'static/Uploads/' + response.filename;
+  					$('#imgUpload1').attr('src',filePath1);
+  					$('#filePath1').val(filePath1);
+  			        	console.log('success');
+  			        },
+  			        error:function(error){
+  			        	console.log(error);
+  			        }
+      			});
+  		})
+  	</script>
 
-  <script>
-    $(function(){
-          $('#fileupload2').fileupload({
-              url: 'upload',
-              dataType: 'json',
-              add: function (e, data) {
-                data.submit();
-              },
-              success:function(response,status) {
-          console.log(response.filename);
-          var filePath2 = 'static/Uploads/' + response.filename;
-          $('#imgUpload2').attr('src',filePath2);
-          $('#filePath2').val(filePath2);
-                console.log('success');
-              },
-              error:function(error){
-                console.log(error);
-              }
-          });
-    })
-  </script>
+    <script>
+      $(function(){
+            $('#fileupload2').fileupload({
+                url: 'upload',
+                dataType: 'json',
+                add: function (e, data) {
+                  data.submit();
+                },
+                success:function(response,status) {
+            console.log(response.filename);
+            var filePath2 = 'static/Uploads/' + response.filename;
+            $('#imgUpload2').attr('src',filePath2);
+            $('#filePath2').val(filePath2);
+                  console.log('success');
+                },
+                error:function(error){
+                  console.log(error);
+                }
+            });
+      })
+    </script>
 
-  <script>
-    $(function(){
-          $('#fileupload3').fileupload({
-              url: 'upload',
-              dataType: 'json',
-              add: function (e, data) {
-                data.submit();
-              },
-              success:function(response,status) {
-          console.log(response.filename);
-          var filePath3 = 'static/Uploads/' + response.filename;
-          $('#imgUpload3').attr('src',filePath3);
-          $('#filePath3').val(filePath3);
-                console.log('success');
-              },
-              error:function(error){
-                console.log(error);
-              }
-          });
-    })
-  </script>
+    <script>
+      $(function(){
+            $('#fileupload3').fileupload({
+                url: 'upload',
+                dataType: 'json',
+                add: function (e, data) {
+                  data.submit();
+                },
+                success:function(response,status) {
+            console.log(response.filename);
+            var filePath3 = 'static/Uploads/' + response.filename;
+            $('#imgUpload3').attr('src',filePath3);
+            $('#filePath3').val(filePath3);
+                  console.log('success');
+                },
+                error:function(error){
+                  console.log(error);
+                }
+            });
+      })
+    </script>
 
   <style>
 	.btn-file {
@@ -212,7 +216,7 @@
             <!-- Textarea -->
             <div class="form-group">
               <label for="txtPost" style="color:white;">Description</label>               
-              <textarea class="form-control" id="txtPost" name="inputDescription" ></textarea>
+              <textarea class="form-control" id="description" name="description" ></textarea>
             </div>
 
             <div class="form-group">
@@ -260,6 +264,41 @@
 
             </div>
 
+
+
+            <!-- REGISTER CASES -->
+            <!-- ====================================================== -->
+            <div class="row marketing">
+              <div class="col-sm-4">
+                  <!-- Name input-->
+                <div class="form-group">
+                  <label  for="txtTitle" style="color:white;">Case 1</label>  
+                  <input id="case1" name="case1" type="text" placeholder="" class="form-control input-md"> 
+                </div>
+              </div>
+   
+              <div class="col-sm-4">
+                  <!-- Name input-->
+                <div class="form-group">
+                  <label  for="txtTitle" style="color:white;">Case 2</label>  
+                  <input id="case2" name="case2" type="text" placeholder="" class="form-control input-md"> 
+                </div>
+              </div>
+
+
+              <div class="col-sm-4">
+                  <!-- Name input-->
+                <div class="form-group">
+                  <label  for="txtTitle" style="color:white;">Case 3</label>  
+                  <input id="case3" name="case3" type="text" placeholder="" class="form-control input-md"> 
+                </div>
+              </div>
+
+
+            </div>
+            <!-- ====================================================== -->
+
+
             <div class="form-group">
             <label style="color:white;">Mark this as private and not visible to others.</label><br/>
             <input name="private"
@@ -294,8 +333,8 @@
         <!-- BOOTSTRAP CORE JAVASCRIPT
     ================================================== -->
     <!-- Placed at the end of the document so the pages load faster -->
-    <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.12.4/jquery.min.js"></script>
-    <script>window.jQuery || document.write('<script src="../../assets/js/vendor/jquery.min.js"><\/script>')</script>
+    <!-- <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.12.4/jquery.min.js"></script> -->
+    <!-- <script>window.jQuery || document.write('<script src="../../assets/js/vendor/jquery.min.js"><\/script>')</script> -->
     <script src="../static/dist/js/bootstrap.min.js"></script>
     <!-- Just to make our placeholder images work. Don't actually copy the next line! -->
     <script src="../static/assets/js/vendor/holder.min.js"></script>
