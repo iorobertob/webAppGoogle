@@ -137,6 +137,8 @@ def userHome(path):
 
 
 def validateLoginBackend(username):
+    print "USERNAME: " + str(username)
+    # if not conn:
     conn        = connect_to_cloudsql()
     cursor      = conn.cursor()
     mysql_query = "SELECT * FROM tbl_user WHERE user_username = '" + str(username) +"';"
@@ -144,8 +146,8 @@ def validateLoginBackend(username):
     cursor.execute(mysql_query)
     data        = cursor.fetchall()
     user_id     = str(data[0][0])
-    cursor.close()
-    conn.close()
+    # cursor.close()
+    # conn.close()
 
     # Resturs the numerical id of the user to build the path later on
     return user_id
@@ -208,13 +210,11 @@ def validateLogin():
     finally:
         cursor.close()
         conn.close()
-
-
-
+ 
 
 @app.route('/signUp',methods=['POST','GET'])
 def signUp():
-    
+
     # TODO: This sucks, but its a way of making it work for now
     _name       = ''
     _email      = ''
@@ -240,7 +240,8 @@ def signUp():
         _case3      = request.form['case3']
 
         # validate the received values
-        if _name and _email and _password:
+        # if _name and _email and _password:
+        if True:
             print "something"
             # All Good, let's call MySQL
             # conn              = mysql.connect(host=hostname,user=username,passwd=passwd,db=dbname)
@@ -254,8 +255,13 @@ def signUp():
                 conn.commit()
                 # return json.dumps({'message':'User created successfully!'})
                 
+                # cursor.close()
+                # conn.close()
+
                 print "Getting the user ID: "
-                user_id = validateLoginBackend(session.get(_email))
+                print str(_email)
+                user_id = validateLoginBackend(str(_email))
+                print "before tuple"
                 session['user'] = user_id;
                 path = "/userHome/"+str(user_id)
                 print "user id: " + str(user_id)
@@ -269,7 +275,7 @@ def signUp():
             return json.dumps({'html':'<span>Enter the required fields</span>'})
 
     except Exception as e:
-        print e
+        print "EXception" + str(e)
         return json.dumps({'error':str(e)})
 
     finally:
