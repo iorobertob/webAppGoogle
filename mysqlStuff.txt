@@ -1,3 +1,6 @@
+DATA TYPES:
+https://www.w3schools.com/sql/sql_datatypes.asp
+
 DELIMITER //
 CREATE DEFINER=`root`@`localhost` PROCEDURE `sp_createUser`(
     IN p_name VARCHAR(45),
