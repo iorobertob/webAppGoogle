@@ -59,6 +59,157 @@ mysql> CREATE TABLE resoluciones (territorio VARCHAR(24), materia VARCHAR(8), ju
 Query OK, 0 rows affected (0.02 sec)
 
 
+CREATE TABLE resoluciones_cache (user VARCHAR(45), territorio VARCHAR(24), materia VARCHAR(8), juez TINYTEXT, regulado VARCHAR(8), no_juez VARCHAR(8), no_expediente VARCHAR(4), año_expediente VARCHAR(4), fecha_renglon DATE, acusado TINYTEXT, victima TINYTEXT, tipo VARCHAR(24));
+
+
+mysql> insert into resoluciones (territorio) select 'tijuana';
+
+
+mysql> call sp_insertValueToResolucionesCache('yo', 'tijuana', 'civil', 'juan', '1', '0980', '0980', '2017', NOW(), 'simon', 'simona', 'exhorto');
+Query OK, 1 row affected, 1 warning (0.01 sec)
+
+
+mysql> SHOW tables;
++--------------------+
+| Tables_in_boletin0 |
++--------------------+
+| resoluciones       |
+| resoluciones_cache |
+| tbl_user           |
++--------------------+
+
+
+mysql> select * from resoluciones_cache;
++------+------------+---------+------+----------+---------+---------------+-----------------+---------------+---------+---------+------+
+| user | territorio | materia | juez | regulado | no_juez | no_expediente | año_expediente  | fecha_renglon | acusado | victima | tipo |
++------+------------+---------+------+----------+---------+---------------+-----------------+---------------+---------+---------+------+
+| NULL | tijuana    | NULL    | NULL | NULL     | NULL    | NULL          | NULL            | NULL          | NULL    | NULL    | NULL |
++------+------------+---------+------+----------+---------+---------------+-----------------+---------------+---------+---------+------+
+1 row in set (0.00 sec)
+
+
+
+
+RESOLUCIONES
++------------+---------+------+----------+---------+---------------+-----------------+---------------+---------+---------+------+
+| territorio | materia | juez | regulado | no_juez | no_expediente | año_expediente  | fecha_renglon | acusado | victima | tipo |
++------------+---------+------+----------+---------+---------------+-----------------+---------------+---------+---------+------+
+| tijuana    | NULL    | NULL | NULL     | NULL    | NULL          | NULL            | NULL          | NULL    | NULL    | NULL |
++------------+---------+------+----------+---------+---------------+-----------------+---------------+---------+---------+------+
+
+
+DELIMITER //
+CREATE PROCEDURE `sp_insertValueToResolucionesCache`(
+    IN user VARCHAR (45),
+    IN territorio VARCHAR(24),
+    IN materia VARCHAR(8),
+    IN juez TINYTEXT,
+    IN regulado VARCHAR(8),
+    IN no_juez VARCHAR(8),
+    IN no_expediente VARCHAR(4),
+    IN año_expediente VARCHAR(4),
+    IN fecha_renglon DATE,
+    IN acusado TINYTEXT,
+    IN victima TINYTEXT,
+    IN tipo VARCHAR(24)
+)
+BEGIN
+     
+    insert into resoluciones_cache
+    (
+        user,
+        territorio,
+        materia,
+        juez,
+        regulado,
+        no_juez,
+        no_expediente,
+        año_expediente,
+        fecha_renglon,
+        acusado,
+        victima,
+        tipo
+    )
+    values
+    (
+        user,
+        territorio,
+        materia,
+        juez,
+        regulado,
+        no_juez,
+        no_expediente,
+        año_expediente,
+        fecha_renglon,
+        acusado,
+        victima,
+        tipo
+    );
+END //
+DELIMITER ;
+
+
+ user_id | user_name | user_username          | user_password    | user_description | user_link | user_jpg1 | user_jpg2 | user_jpg3 | user_case1 | user_case2 | user_case3
+
+DELIMITER //
+CREATE PROCEDURE `sp_createUser`(
+    IN name VARCHAR(45),
+    IN username VARCHAR(45),
+    IN password VARCHAR(127),
+    IN description TEXT,
+    IN link TINYTEXT,
+    IN jpg1 TINYTEXT,
+    IN jpg2 TINYTEXT,
+    IN jpg3 TINYTEXT,
+    IN case1 CHAR(10),
+    IN case2 CHAR(10),
+    IN case3 CHAR(10)
+)
+BEGIN
+    if ( select exists (select 1 from tbl_user where user_username = username) ) THEN
+     
+        select 'Username Exists !!';
+     
+    ELSE
+     
+        insert into tbl_user
+        (
+            user_name,
+            user_username,
+            user_password,
+            user_description,
+            user_link,
+            user_jpg1,
+            user_jpg2,
+            user_jpg3,
+            user_case1,
+            user_case2,
+            user_case3,
+            user_creationdate
+        )
+        values
+        (
+            name,
+            username,
+            password,
+            description,
+            link,
+            jpg1,
+            jpg2,
+            jpg3,
+            case1,
+            case2,
+            case3,
+            NOW()
+        );
+     
+    END IF;
+END //
+DELIMITER ;
+
+call sp_createUser('yo mero', 'yo@yo.com', '123456', 'yo soy consciencia vibracional', 'iobridger.wordpress.com', '/path/jpg1.jpg', '/path/jpg2.jpg', '/path/jpg3.jpg', '0234/2017', '0987/2016', '9087/2013');
+
+
 # Delete procecure
 DROP PROCEDURE IF EXISTS procedureName;
 
@@ -117,3 +268,6 @@ BEGIN
     END IF;
 END //
 DELIMITER ;
+
+
+
