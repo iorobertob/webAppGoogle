@@ -23,7 +23,6 @@ CLOUDSQL_CONNECTION_NAME    = os.environ.get('CLOUDSQL_CONNECTION_NAME')
 CLOUDSQL_USER               = os.environ.get('CLOUDSQL_USER')
 CLOUDSQL_PASSWORD           = os.environ.get('CLOUDSQL_PASSWORD')
 
-
 def connect_to_cloudsql():
     # When deployed to App Engine, the 'SERVER_SOFTWARE' environment variable
     # will be set to 'Google App Engine/version'.
@@ -91,14 +90,15 @@ def showSignUp():
     # return render_template('signup.html')
     return render_template('signup_image.html')
 
+@app.route('/error')
+def showError():
+
+    return render_template('error.html', data = 'Data error')
 
 @app.route('/userHome/<path:path>/',methods=['GET','POST'])
-# @app.route('/userHome')
 def userHome(path):
 
     # If we are in the same session, this prohibits the current user to visit other profiles
-    print 'SESSION'
-    print session.get('user') 
     if (str(session.get('user')) == str(path)):
 
         conn    = connect_to_cloudsql()
@@ -120,6 +120,9 @@ def userHome(path):
 
         userURL             = '/userHome/'+str(path)
 
+        conn.close()
+        cursor.close()
+
         return render_template('userhome.html', 
             name        = data_name, 
             email       = data_email, 
@@ -134,76 +137,28 @@ def userHome(path):
     else:
         return render_template('error.html',error = 'Unauthorized Access')
 
-
-
-def validateLoginBackend(username):
-    print "USERNAME: " + str(username)
-    # if not conn:
-    conn        = connect_to_cloudsql()
-    cursor      = conn.cursor()
-    mysql_query = "SELECT * FROM tbl_user WHERE user_username = '" + str(username) +"';"
-
-    cursor.execute(mysql_query)
-    data        = cursor.fetchall()
-    user_id     = str(data[0][0])
-    # cursor.close()
-    # conn.close()
-
-    # Resturs the numerical id of the user to build the path later on
-    return user_id
-
 @app.route('/validateLogin',methods=['POST'])
 def validateLogin():
     try:
-        if session.get('user'):  # Comging from fresh sign up
-            _username   = session.get('user')
-            session.pop('user',None)
-            print _username
-            conn       = connect_to_cloudsql()
-            print 'simon'
-            cursor      = conn.cursor()
-            print  'cursor'
-            mysql_query = "SELECT * FROM tbl_user WHERE user_username = '" + str(_username) +"';"
-            print mysql_query
-            cursor.execute(mysql_query)
-            print 'after cursor'
-            data = cursor.fetchall()
-            print data[0][0]
-            path = "/userHome/" +  str(data[0][0])
-            print  path 
-            if len(data) > 0:
+        _username = request.form['inputEmail']
+        _password = request.form['inputPassword']
+
+        # connect to mysql
+        conn    = connect_to_cloudsql()
+        cursor  = conn.cursor()
+        cursor.callproc('sp_validateLogin',(_username,))
+        data    = cursor.fetchall()
+ 
+        if len(data) > 0:
+            # 0 is the first row, and 3 is the 4th column !!! obviously 
+            if check_password_hash(str(data[0][3]),_password):
+                session['user'] = data[0][0]
                 path = "/userHome/" +  str(data[0][0])
-                print "redirecting to " + path 
                 return redirect(path)
             else:
                 return render_template('error.html',error = 'Wrong Email address or Password.')
-
-
-        else: # Not coming from sign up
-            _username = request.form['inputEmail']
-            _password = request.form['inputPassword']
-
-            # connect to mysql
-            print _password
-            conn    = connect_to_cloudsql()
-            cursor  = conn.cursor()
-            cursor.callproc('sp_validateLogin',(_username,))
-            data    = cursor.fetchall()
-     
-            if len(data) > 0:
-                # 0 is the first row, and 3 is the 4th column !!! obviously 
-                if check_password_hash(str(data[0][3]),_password):
-                    session['user'] = data[0][0]
-
-                    path = "/userHome/" +  str(data[0][0])
-                    # return redirect('/userHome/')
-                    print "redirecting to " + path 
-                    return redirect(path)
-                else:
-                    return render_template('error.html',error = 'Wrong Email address or Password.')
-            else:
-                return render_template('error.html',error = 'Wrong Email address or Password.')
- 
+        else:
+            return render_template('error.html',error = 'Wrong Email address or Password.')
  
     except Exception as e:
         return render_template('error.html',error = str(e))
@@ -211,7 +166,6 @@ def validateLogin():
         cursor.close()
         conn.close()
  
-
 @app.route('/signUp',methods=['POST','GET'])
 def signUp():
 
@@ -240,8 +194,7 @@ def signUp():
         _case3      = request.form['case3']
 
         # validate the received values
-        # if _name and _email and _password:
-        if True:
+        if _name and _email and _password:
             print "something"
             # All Good, let's call MySQL
             # conn              = mysql.connect(host=hostname,user=username,passwd=passwd,db=dbname)
@@ -251,24 +204,14 @@ def signUp():
             cursor.callproc('sp_createUser',(_name,_email,_hashed_password, _description, _link, _jpg1, _jpg2, _jpg3, _case1, _case2, _case3))
             data                = cursor.fetchall()
 
+            # USER CREATED SUCCESFULLY
             if len(data) is 0:
                 conn.commit()
-                # return json.dumps({'message':'User created successfully!'})
-                
-                # cursor.close()
-                # conn.close()
-
-                print "Getting the user ID: "
-                print str(_email)
-                user_id = validateLoginBackend(str(_email))
-                print "before tuple"
+                # Retreive the auto asigned ID and use it to create a session, then call userHome from java script
+                user_id = getIdFromEmail(str(_email))
                 session['user'] = user_id;
-                path = "/userHome/"+str(user_id)
-                print "user id: " + str(user_id)
-                # print session.get('user')
-                # return redirect ('/validateLogin')#,code=307)
-                # return render_template('index_table.html', data = data)
-                return redirect(path)
+                # return json.dumps({'message':'User created successfully!'})
+                return user_id
             else:
                 return json.dumps({'error':str(data[0])})
         else:
@@ -284,6 +227,17 @@ def signUp():
         cursor.close() 
         conn.close()
 
+def getIdFromEmail(username):
+    
+    conn        = connect_to_cloudsql()
+    cursor      = conn.cursor()
+    mysql_query = "SELECT * FROM tbl_user WHERE user_username = '" + str(username) +"';"
+    cursor.execute(mysql_query)
+    data        = cursor.fetchall()
+    user_id     = str(data[0][0])
+
+    # Resturs the numerical id of the user to build the path later on
+    return user_id
 
 @app.route('/display')        
 def display():
@@ -334,7 +288,6 @@ def getProfile():
             return render_template('error.html', error = 'Unauthorized Access')
     except Exception as e:
         return render_template('error.html', error = str(e))
-
 
 if __name__ == "__main__":
     app.run(host='0.0.0.0')

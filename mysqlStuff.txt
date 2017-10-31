@@ -1,3 +1,7 @@
+restart key autoincrement mysql
+ALTER TABLE tbl_user AUTO_INCREMENT = 1
+
+
 DELIMITER //
 CREATE DEFINER=`root`@`localhost` PROCEDURE `sp_createUser`(
     IN p_name VARCHAR(45),
