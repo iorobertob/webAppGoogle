@@ -15,7 +15,10 @@ https://cloud.google.com/appengine/docs/standard/python/config/cron
 - Send Emails from python in Google App Engine: <br />
 https://cloud.google.com/appengine/docs/standard/python/mail/
 
-- Python scripts to retreive information from Bulletin and parse it <br />
+- Python scripts to retreive/parse information from Bulletin and parse it <br />
+https://stackoverflow.com/questions/33566843/how-to-extract-text-from-html-page
+https://www.crummy.com/software/BeautifulSoup/ <br />
+https://www.crummy.com/software/BeautifulSoup/bs4/doc/ <br />
 
 - Add Facebook Login: <br />
 https://developers.facebook.com/docs/facebook-login/android/
