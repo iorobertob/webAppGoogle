@@ -8,6 +8,8 @@ app = Flask(__name__)
 app.config['UPLOAD_FOLDER'] = 'static/Uploads'
 app.secret_key = 'why would I tell you my secret key?'
 
+app.debug = True
+
 # MySQL configurations
 username    = 'root'
 passwd      = 'NO'
@@ -44,7 +46,7 @@ def connect_to_cloudsql():
     #
 
     else:
-        print "local mysql"
+        print "Using local mysql"
         conn = mysql.connect(
             host    = '127.0.0.1',
             user    = 'root',
@@ -56,7 +58,12 @@ def connect_to_cloudsql():
 @app.route('/')
 @app.route('/main')
 def main():
-    return render_template('index.html')
+    if session.get('user'):
+        userURL             = '/userHome/'+str(session.get('user'))
+        return render_template('index.html', signUpText = '', signUpPath = userURL, signInText = "LogOut", signInPath = "/logout")
+
+    else:
+        return render_template('index.html', signUpText = "Sign Up", signUpPath = "/showSignUp",  signInText = "LogIn", signInPath = "/showSignIn")
 
 # This is a dummy function to test cathing any path and using it to render content
 # @app.route('/public/<path:path>/')
@@ -65,19 +72,30 @@ def bla():
     # print path
     return render_template('index_carousel.html', first_slider="path")
 
-
+@app.route('/logout')
+def logout():
+    session.pop('user',None)
+    return redirect('/')
 
 @app.route('/showSignIn')
 def showSignin():
-    return render_template('signin.html')
+    if session.get('user'):
+        userURL             = '/userHome/'+str(session.get('user'))
+        return redirect(userURL)
+    else:
+        return render_template('signin.html')
 
 @app.route('/showSignUp')
 def showSignUp():
     # return render_template('signup.html')
     return render_template('signup_image.html')
 
-@app.route('/userHome/<path:path>/')
-# @app.route('/userHome')
+@app.route('/error')
+def showError():
+
+    return render_template('error.html', data = 'Data error')
+
+@app.route('/userHome/<path:path>/',methods=['GET','POST'])
 def userHome(path):
 
     # If we are in the same session, this prohibits the current user to visit other profiles
@@ -86,7 +104,7 @@ def userHome(path):
         conn    = connect_to_cloudsql()
         cursor  = conn.cursor()
         # cursor.callproc('sp_validateLogin',(_username,))
-        mysql_query = "SELECT * FROM tbl_user WHERE user_id = " + path
+        mysql_query = "SELECT * FROM tbl_user WHERE user_id = '" + str(path) + "';"
         cursor.execute(mysql_query)
         data    = cursor.fetchall()
 
@@ -100,7 +118,12 @@ def userHome(path):
         data_case2          = data[0][10]
         data_case3          = data[0][11]
 
-        return render_template('userhome_1.html', 
+        userURL             = '/userHome/'+str(path)
+
+        conn.close()
+        cursor.close()
+
+        return render_template('userhome.html', 
             name        = data_name, 
             email       = data_email, 
             description = data_description,
@@ -109,17 +132,10 @@ def userHome(path):
             jpg3        = data_jpg3,
             case1       = data_case1,
             case2       = data_case2,
-            case3       = data_case3)
+            case3       = data_case3,
+            url         = userURL)
     else:
         return render_template('error.html',error = 'Unauthorized Access')
-
-
-@app.route('/logout')
-def logout():
-    session.pop('user',None)
-    return redirect('/')
-
-
 
 @app.route('/validateLogin',methods=['POST'])
 def validateLogin():
@@ -138,21 +154,114 @@ def validateLogin():
             if check_password_hash(str(data[0][3]),_password):
                 session['user'] = data[0][0]
                 path = "/userHome/" +  str(data[0][0])
-                # return redirect('/userHome/')
                 return redirect(path)
             else:
                 return render_template('error.html',error = 'Wrong Email address or Password.')
         else:
             return render_template('error.html',error = 'Wrong Email address or Password.')
  
- 
     except Exception as e:
         return render_template('error.html',error = str(e))
     finally:
         cursor.close()
         conn.close()
-        # return render_template('loginerror.html',error = 'Unauthorized Access')
+ 
+@app.route('/signUp',methods=['POST','GET'])
+def signUp():
 
+    # TODO: This sucks, but its a way of making it work for now
+    _name       = ''
+    _email      = ''
+    _password   = ''
+    _description= ''
+    _link       = ''
+    _jpg1       = ''
+    _jpg2       = ''
+    _jpg3       = ''
+    _case1      = ''
+    _case2      = ''
+    _case3      = ''
+    try:
+        _name       = request.form['inputName']
+        _email      = request.form['inputEmail']
+        _password   = request.form['inputPassword']
+        _description= request.form['description']
+        _jpg1       = request.form['filePath1']
+        _jpg2       = request.form['filePath2']
+        _jpg3       = request.form['filePath3']
+        _case1      = request.form['case1']
+        _case2      = request.form['case2']
+        _case3      = request.form['case3']
+
+        # validate the received values
+        if _name and _email and _password:
+            print "something"
+            # All Good, let's call MySQL
+            # conn              = mysql.connect(host=hostname,user=username,passwd=passwd,db=dbname)
+            conn                = connect_to_cloudsql()
+            cursor              = conn.cursor()
+            _hashed_password    = generate_password_hash(_password)
+            cursor.callproc('sp_createUser',(_name,_email,_hashed_password, _description, _link, _jpg1, _jpg2, _jpg3, _case1, _case2, _case3))
+            data                = cursor.fetchall()
+
+            # USER CREATED SUCCESFULLY
+            if len(data) is 0:
+                conn.commit()
+                # Retreive the auto asigned ID and use it to create a session, then call userHome from java script
+                user_id = getIdFromEmail(str(_email))
+                session['user'] = user_id;
+                # return json.dumps({'message':'User created successfully!'})
+                return user_id
+            else:
+                return json.dumps({'error':str(data[0])})
+        else:
+            return json.dumps({'html':'<span>Enter the required fields</span>'})
+
+    except Exception as e:
+        print "EXception" + str(e)
+        return json.dumps({'error':str(e)})
+
+    finally:
+        # TODO: This shit is bad, if name email and password are not valid, no cursor nor conn will
+        # have been created so here they will be null, fix this!
+        cursor.close() 
+        conn.close()
+
+def getIdFromEmail(username):
+    
+    conn        = connect_to_cloudsql()
+    cursor      = conn.cursor()
+    mysql_query = "SELECT * FROM tbl_user WHERE user_username = '" + str(username) +"';"
+    cursor.execute(mysql_query)
+    data        = cursor.fetchall()
+    user_id     = str(data[0][0])
+
+    # Resturs the numerical id of the user to build the path later on
+    return user_id
+
+@app.route('/display')        
+def display():
+    conn                = connect_to_cloudsql()
+    cursor              = conn.cursor()
+    # query               = 'SELECT * from tbl_user'
+    cursor.execute('SELECT user_id, user_name, user_username from tbl_user')
+    # cursor.execute('SELECT * from tbl_user')
+
+    data = cursor.fetchall()
+    conn.commit()
+    cursor.close() 
+    conn.close()
+    return render_template('index_table.html', data = data)
+
+@app.route('/upload', methods=['GET', 'POST'])
+def upload():
+    # file upload handler code will be here
+    if request.method == 'POST':
+        file = request.files['file']
+        extension = os.path.splitext(file.filename)[1]
+        f_name = str(uuid.uuid4()) + extension
+        file.save(os.path.join(app.config['UPLOAD_FOLDER'], f_name))
+        return json.dumps({'filename':f_name})
 
 @app.route('/getProfile')
 def getProfile():
@@ -180,90 +289,8 @@ def getProfile():
     except Exception as e:
         return render_template('error.html', error = str(e))
 
-
-@app.route('/signUp',methods=['POST','GET'])
-def signUp():
-    # TODO: This sucks, but its a way of making it work for now
-    _name       = ''
-    _email      = ''
-    _password   = ''
-    _description= ''
-    _link       = ''
-    _jpg1       = ''
-    _jpg2       = ''
-    _jpg3       = ''
-    _case1      = ''
-    _case2      = ''
-    _case3      = ''
-    try:
-        _name       = request.form['inputName']
-        _email      = request.form['inputEmail']
-        _password   = request.form['inputPassword']
-        _description= request.form['description']
-        _jpg1       = request.form['filePath1']
-        _jpg2       = request.form['filePath2']
-        _jpg3       = request.form['filePath3']
-        _case1      = request.form['case1']
-        _case2      = request.form['case2']
-        _case3      = request.form['case3']
-
-        # validate the received values
-        if _name and _email and _password:
-
-            # All Good, let's call MySQL
-            # conn              = mysql.connect(host=hostname,user=username,passwd=passwd,db=dbname)
-            conn                = connect_to_cloudsql()
-            cursor              = conn.cursor()
-            _hashed_password    = generate_password_hash(_password)
-            cursor.callproc('sp_createUser',(_name,_email,_hashed_password, _description, _link, _jpg1, _jpg2, _jpg3, _case1, _case2, _case3))
-            data                = cursor.fetchall()
-
-            if len(data) is 0:
-                conn.commit()
-                return json.dumps({'message':'User created successfully!'})
-                # return render_template('index_table.html', data = data)
-            else:
-                return json.dumps({'error':str(data[0])})
-        else:
-            return json.dumps({'html':'<span>Enter the required fields</span>'})
-
-    except Exception as e:
-
-        return json.dumps({'error':str(e)})
-    finally:
-        # TODO: This shit is bad, if name email and password are not valid, no cursor nor conn will
-        # have been created so here they will be null, fix this!
-        cursor.close() 
-        conn.close()
-
-
-@app.route('/display')        
-def display():
-    conn                = connect_to_cloudsql()
-    cursor              = conn.cursor()
-    # query               = 'SELECT * from tbl_user'
-    cursor.execute('SELECT user_id, user_name, user_username from tbl_user')
-    # cursor.execute('SELECT * from tbl_user')
-
-    data = cursor.fetchall()
-    conn.commit()
-    cursor.close() 
-    conn.close()
-    return render_template('index_table.html', data = data)
-
-@app.route('/upload', methods=['GET', 'POST'])
-def upload():
-    # file upload handler code will be here
-    if request.method == 'POST':
-        file = request.files['file']
-        extension = os.path.splitext(file.filename)[1]
-        f_name = str(uuid.uuid4()) + extension
-        file.save(os.path.join(app.config['UPLOAD_FOLDER'], f_name))
-        return json.dumps({'filename':f_name})
-
-
 if __name__ == "__main__":
-    app.run()
+    app.run(host='0.0.0.0')
 
 
 
