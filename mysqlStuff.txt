@@ -6,6 +6,14 @@ restart key autoincrement mysql
 ALTER TABLE tbl_user AUTO_INCREMENT = 1
 
 
+START MYSQL SERVICE
+Ubuntu:
+sudo /etc/init.d/mysql - root -p start
+
+OSX
+mysql.server start
+
+
 DELIMITER //
 CREATE DEFINER=`root`@`localhost` PROCEDURE `sp_createUser`(
     IN p_name VARCHAR(45),
