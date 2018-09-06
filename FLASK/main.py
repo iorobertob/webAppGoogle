@@ -4,6 +4,8 @@ import  MySQLdb     as      mysql
 import  os
 import  uuid
 
+a;lkdjfa;lkdsjfa;lkdfjsa
+
 app = Flask(__name__)
 app.config['UPLOAD_FOLDER'] = 'static/Uploads'
 app.secret_key = 'why would I tell you my secret key?'
